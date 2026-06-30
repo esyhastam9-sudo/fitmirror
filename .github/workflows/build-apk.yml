@@ -22,9 +22,27 @@ jobs:
             echo "Found $ZIP_FILE — extracting to repo root..."
             unzip -o "$ZIP_FILE" -d .
             rm -f "$ZIP_FILE"
+
+            if [ ! -f build.gradle ]; then
+              CANDIDATE=$(find . -maxdepth 2 -name "build.gradle" -not -path "./app/*" | head -n 1)
+              if [ -n "$CANDIDATE" ]; then
+                INNER_DIR=$(dirname "$CANDIDATE")
+                echo "build.gradle found inside $INNER_DIR — flattening..."
+                shopt -s dotglob
+                cp -rT "$INNER_DIR" .
+                shopt -u dotglob
+              fi
+            fi
           else
             echo "No zip found, assuming files were uploaded unzipped."
           fi
+
+      - name: Debug - show repo contents
+        run: |
+          echo "── Top level ──"
+          ls -la
+          echo "── Recursive (depth 3, excluding .git) ──"
+          find . -maxdepth 3 -not -path "./.git*"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
